@@ -24,16 +24,16 @@ SIZE = 1000
 def ham(bits):
     total_sum = 0
     for i in range(SIZE):
-        total_sum += (bits[i, 0] ^ bits[i, 1])
+        total_sum += (bits[i, 0] ^ bits[i, 1]) * bits[i, 2]
     return total_sum
 
-data = np.random.randint(0, 2, (SIZE, 2))
+data = np.random.randint(0, 2, (SIZE, 3))
 
 print()
 
 print(f"Compilation started @ {time.strftime('%H:%M:%S', time.localtime())}")
 start = time.time()
-inputset = [np.random.randint(0, 2, (SIZE, 2)) for _ in range(100)]
+inputset = [np.random.randint(0, 2, (SIZE, 3)) for _ in range(100)]
 circuit = ham.compile(inputset, configuration)
 end = time.time()
 print(f"(took {end - start:.3f} seconds)")

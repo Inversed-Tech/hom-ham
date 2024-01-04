@@ -16,6 +16,7 @@ configuration = fhe.Configuration(
     progress_tag=True,
     # To give a title to the progressbar
     progress_title="Evaluation:",
+    loop_parallelize=True
 )
 
 SIZE = 1000

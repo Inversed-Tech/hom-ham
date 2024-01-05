@@ -1,0 +1,27 @@
+
+import math
+import util
+
+SIZE = 16
+LENGTH = 64
+program.set_bit_length(LENGTH)
+program.use_edabit(True)
+
+xor_op = lambda x, y: x.bit_xor(y)
+and_op = lambda x, y: x.bit_and(y)
+a = sint.Array(SIZE)
+b = sint.Array(SIZE)
+res = sint.Array(SIZE)
+count = sint.Array(SIZE)
+a.input_from(0)
+b.input_from(1)
+
+total = MemValue(sint(0))
+@for_range(SIZE)
+def _(i):
+    res[i] = xor_op(a[i], b[i])
+    count[i] = sbitvec(res[i], LENGTH, LENGTH).popcnt()
+    #print_ln('count: %s', count[i].reveal())
+    total.write(total + count[i])
+print_ln('total: %s', total.reveal())
+

@@ -1,0 +1,30 @@
+
+import math
+import util
+
+SIZE = 1000
+LENGTH = 1
+program.set_bit_length(LENGTH)
+
+xor_op = lambda x, y: x.bit_xor(y)
+and_op = lambda x, y: x.bit_and(y)
+a = sint.Array(SIZE)
+a_mask = sint.Array(SIZE)
+res_a = sint.Array(SIZE)
+b = sint.Array(SIZE)
+b_mask = sint.Array(SIZE)
+res_b = sint.Array(SIZE)
+res = sint.Array(SIZE)
+a.input_from(0)
+a_mask.input_from(0)
+b.input_from(1)
+b_mask.input_from(1)
+
+total = MemValue(sint(0))
+@for_range(SIZE)
+def _(i):
+    res_a[i] = and_op(a[i], a_mask[i])
+    res_b[i] = and_op(b[i], b_mask[i])
+    res[i] =  xor_op(res_a[i], res_b[i])
+    total.write(total + res[i])
+print_ln('%s', total.reveal())

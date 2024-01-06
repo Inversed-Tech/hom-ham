@@ -30,7 +30,7 @@ class ltv_base{
     void KeyGen();
     ZZ_pE Encrypt(ZZ_pE m);
     ZZ_pE Decrypt(ZZ_pE c);
-    ZZ_pE Decrypt2(ZZ_pE c);
+    ZZ_pE DecryptMul(ZZ_pE c);
     ZZ_pE DecryptLTV(ZZ_pE c);
 };
 

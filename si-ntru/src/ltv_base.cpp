@@ -245,20 +245,21 @@ ZZ_pE ltv_base::Decrypt(ZZ_pE c){
   return res;
 }
 
-// We can decrypt without calling KeySwitch
-ZZ_pE ltv_base::Decrypt2(ZZ_pE c){
+ZZ_pE ltv_base::DecryptMul(ZZ_pE c){
   int i;
   ZZ_pE res;
   ZZ_pX pol;
   ZZ_pX aux = conv<ZZ_pX>(c*this->f*this->f);
   for(i=0;i<this->n;i++){
     ZZ auxc = conv<ZZ>(coeff(aux,i));
-    auxc = CenterLift(auxc, this->q);
+
     auxc *= this->t;
-    if ((auxc < this->q/2) && (auxc > -this->q/2))
-      SetCoeff(pol, i, 0);
-    else 
-      SetCoeff(pol, i, 1);
+    if (auxc >= 0)
+      auxc = (auxc + q/2)/q;
+    else
+      auxc = (auxc - q/2)/q;
+    auxc %= conv<ZZ>(t);
+    SetCoeff(pol, i, conv<ZZ_p>(auxc));
   }
   res = conv<ZZ_pE>(pol);
   return res;

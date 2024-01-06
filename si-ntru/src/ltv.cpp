@@ -94,8 +94,8 @@ ZZ_pE ltv::Decrypt(ZZ_pE c){
   return this->b->Decrypt(c);
 }
 
-ZZ_pE ltv::Decrypt2(ZZ_pE c){
-  return this->b->Decrypt2(c);
+ZZ_pE ltv::DecryptMul(ZZ_pE c){
+  return this->b->DecryptMul(c);
 }
   
 ZZ_pE ltv::InnerProduct(Vec<ZZ_pE> a, Vec<ZZ_pE> b){

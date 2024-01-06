@@ -431,9 +431,9 @@ bool lheIrisTest(){
 
     start = clock();
     ZZ_pE cmul = ctx->Mult(c1-c2,c1_inv-c2_inv,q);
-    ZZ_pE kcmul= ctx->KeySwitch(cmul);
+    //ZZ_pE kcmul= ctx->KeySwitch(cmul);
     end = clock();
-    ZZ_pE mm = ctx->Decrypt(kcmul);
+    ZZ_pE mm = ctx->DecryptMul(cmul);
     elapsed = ((double) (end - start)) / CLOCKS_PER_SEC;
     cout << "time iris: " << elapsed << " secs\n";
     cout << "mm" << mm << "\n";

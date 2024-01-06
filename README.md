@@ -18,6 +18,10 @@ To run the code, you must install GMP and NTL libraries. For GMP, download it an
 ./test/ltvtest
 ```
 
+## MPC Experiments
+
+Folder `mpc-experiments` contains some experiments using [MP-SPDZ](https://mp-spdz.readthedocs.io/en/latest/index.html).
+
 ## Final Remarks
 
 Some implementations can be adapted to include initial masking and final comparisons. For example, compilers for Fully Homomorphic Encryption (FHE) are powerful tools that allow the addition of more functionality to homomorphic systems. However, this generally comes at a high computational cost. To achieve optimal performance, tailoring the construction to our specific use case is essential.

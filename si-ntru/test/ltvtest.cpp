@@ -381,6 +381,19 @@ void lheTiming(){
 
 }
 
+ZZ_p HammingDistance(ZZ_pE m1, ZZ_pE m2, int size) {
+  int i;
+  ZZ_p res;
+  ZZ_pX pol1 = conv<ZZ_pX>(m1);
+  ZZ_pX pol2 = conv<ZZ_pX>(m2);
+  for (i=0; i<size; i++) {
+    ZZ_p c1 = coeff(pol1, i);
+    ZZ_p c2 = coeff(pol2, i);
+    res += (c1!=c2);
+  }
+  return res;
+}
+
 bool lheIrisTest(){
   clock_t start, end;
   double elapsed;
@@ -392,7 +405,7 @@ bool lheIrisTest(){
   long w = W;
   long e = E;
   ltv *ctx;
-  ZZ q ;
+  ZZ q;
   long SIZE  = 1000;
   GenPrime(q, Q);
   ZZ_p::init(q);
@@ -427,12 +440,13 @@ bool lheIrisTest(){
 
     ZZ_pX pol = conv<ZZ_pX>(mm);
     cout << "Hamming distance: " << coeff(pol, SIZE-1) << "\n";
-    /*if (ctx->ModN(m1+m2, t) == mm){
+    ZZ_p hd = coeff(pol, SIZE-1);
+    if (HammingDistance(m1,m2,SIZE) == hd){
       ok++;
     }
     else{
       nok++;
-    }*/
+    }
     count++;
   }
   int result = (ok == count);

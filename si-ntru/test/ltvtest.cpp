@@ -6,7 +6,7 @@
 using namespace std;
 using namespace NTL;
 
-#define NUM 10
+#define NUM 100
 #define N 2048
 #define Q 107
 #define T 1024
@@ -435,7 +435,7 @@ bool lheIrisTest(){
     end = clock();
     ZZ_pE mm = ctx->DecryptMul(cmul);
     elapsed = ((double) (end - start)) / CLOCKS_PER_SEC;
-    cout << "time iris: " << elapsed << " secs\n";
+    cout << "time: " << elapsed << " secs\n";
     cout << "mm" << mm << "\n";
 
     ZZ_pX pol = conv<ZZ_pX>(mm);
@@ -475,6 +475,6 @@ int main(){
   cout << FGRN("LTV Rotation test result: ") << (t1 ? BOLD(FGRN("True")) : BOLD(FRED("False"))) << "\n";
   lheTiming();*/
   bool t_iris = lheIrisTest();
-  cout << FGRN("Base LTV Iris Matching Homomorphism test result: ") << (t_iris ? BOLD(FGRN("True")) : BOLD(FRED("False"))) << "\n";
+  cout << FGRN("Homomorphic Iris Matching result: ") << (t_iris ? BOLD(FGRN("True")) : BOLD(FRED("False"))) << "\n";
   return 0;
 }

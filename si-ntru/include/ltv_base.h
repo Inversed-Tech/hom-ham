@@ -20,6 +20,7 @@ class ltv_base{
     ZZ_pE ModN(ZZ_pE a, long n);
     ZZ_pE SampleMessage();
     void SampleFeature(long size, ZZ_pE *r1, ZZ_pE *r2);
+    void SampleFeatures(long num, long size, ZZ_pE *r1, ZZ_pE *r2);
     ZZ_pE SampleMessage256();
     ZZ_pE SampleMessageN(long n);
     ZZ_pE SampleErr();

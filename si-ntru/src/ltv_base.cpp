@@ -33,6 +33,23 @@ void ltv_base::SampleFeature(long size, ZZ_pE *r1, ZZ_pE *r2){
   return;
 }
 
+void ltv_base::SampleFeatures(long num, long size, ZZ_pE *r1, ZZ_pE *r2){
+  int i, j, mm;
+  //ZZ_pE res;
+  ZZ_pX pol1;
+  ZZ_pX pol2;
+  for (j=0; j<num; j++) {
+    for(i=0;i<size;i++){
+      mm = rand()%2;
+      SetCoeff(pol1, j*size + i, conv<ZZ_p>(mm));
+      SetCoeff(pol2, j*size + size-i-1, conv<ZZ_p>(mm));
+    }
+  }
+  *r1 = conv<ZZ_pE>(pol1);
+  *r2 = conv<ZZ_pE>(pol2);
+  return;
+}
+
 ZZ_pE ltv_base::SampleMessage256(){
   int i, mm;
   ZZ_pE res;

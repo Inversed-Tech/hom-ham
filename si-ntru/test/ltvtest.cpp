@@ -8,11 +8,11 @@ using namespace NTL;
 
 #define NUM 100
 #define N 2048
-#define Q 107
-#define T 1024
+#define Q 101
+#define T 2048
 #define W 2
 #define E 0
-#define LWQ 158
+#define LWQ 102
 
 void lheInit(ltv *ctx){
   long lwq = Q+1;
@@ -406,7 +406,7 @@ bool lheIrisTest(){
   long e = E;
   ltv *ctx;
   ZZ q;
-  long SIZE  = 1000;
+  long SIZE  = 2000;
   GenPrime(q, Q);
   ZZ_p::init(q);
   ZZ_pX P;
@@ -475,6 +475,6 @@ int main(){
   cout << FGRN("LTV Rotation test result: ") << (t1 ? BOLD(FGRN("True")) : BOLD(FRED("False"))) << "\n";
   lheTiming();*/
   bool t_iris = lheIrisTest();
-  cout << FGRN("Homomorphic Iris Matching result: ") << (t_iris ? BOLD(FGRN("True")) : BOLD(FRED("False"))) << "\n";
+  cout << FGRN("Homomorphic Iris Matching: ") << (t_iris ? BOLD(FGRN("Passed")) : BOLD(FRED("Failed"))) << "\n";
   return 0;
 }

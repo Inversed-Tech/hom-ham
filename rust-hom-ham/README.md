@@ -2,6 +2,12 @@
 
 Here there are a couple of experiment using Concrete in rust. For thousands of bits we have that it takes tens of seconds to finish a basic building block, therefore a naive approach isn't practical.
 
+Run this code using:
+```sh
+cargo run --release --bin main
+cargo run --release --bin popcount
+```
+
 Other approaches:
 
 * [Lookup tables](https://docs.zama.ai/concrete/tutorials/table_lookups). It allows to optimize certain function by using lookup tables. Current constructions allows us to construct lookup tables for relatively small input size. This technique may be useful for low resolution filtering/matching, but not appropriate for high resolution unless hybrid approach is used together with the lookup table. 

@@ -9,8 +9,8 @@ You might also need to install these libraries:
 If you're having trouble installing packages, try using a virtualenv:
 ```sh
 pip install -U pip wheel setuptools virtualenv
-python -m venv concrete
-source concrete/bin/activate
+python -m venv concrete-venv
+source concrete-venv/bin/activate
 pip install concrete-python matplotlib
 ```
 

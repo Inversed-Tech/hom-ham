@@ -52,14 +52,14 @@ fn main() {
 
         // inline popcount
         let mut num = xor_res;
+        /*
         let popcount = |num: u32| -> u32 {
             let num = num - ((num >> s1) & 0x55);
             let num = (num & 0x33) + ((num >> s2) & 0x33);
             let num = ((num + (num >> s4)) & 0xF) * 0x11;
             num >> s8
         };
-
-
+        */
 
         num = num.clone() - ((num >> s1.clone()) & 0x55);
         num = (num.clone() & 0x33) + ((num >> s2.clone()) & 0x33);

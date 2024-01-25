@@ -16,7 +16,7 @@ The code in the `SortingHat` directory was copied from the original [repo's](htt
 
 ## Experiments
 
-Next code is a unit test added to file rlwe.rs from . The purpose of this unit test is to measure time for comparisons, XORs, and additions.
+We added an `iris.rs` benchmark to the `SortingHat` Rust code. The purpose of this benchmark is to measure time for comparisons, XORs, and additions.
 
 XOR operations were computed using CMUX, and a current line of work is to optimize this computation.
 
@@ -25,12 +25,13 @@ XOR operations were computed using CMUX, and a current line of work is to optimi
 To run the experiments, use these commands:
 ```sh
 cd SortingHat/src/rust_pdte
-cargo test --release -- test_less_eq_ham --nocapture
+cargo bench --bench iris
 ```
 
 ### Experimental Outcomes
 
 With this information in our hands, we can already quickly sketch scenarios and estimate time for the homomorphic evaluations. For example, using fast comparisons (98 micsecs) and 1000 additions (400 ms) for counting bits, and 1000 XORs (600 ms, the bottleneck). Total is 1 second.
- If after filtering we have smaller features, and consequently more comparisons, then we can already estimate the cost. Consider 5 features of 200 bits, then 5 comparisons. Meaning the cost is `5*98 micsecs + ~80ms + ~120 ms = 200.5 ms`. As a second example, using lots of small features, say 64 features of 16 bits (closer to what was explored in the underlying paper), then the cost is: `64*98 micsecs + 16*0.4 ms + 16*0.6 ms = 6.3 ms + 16 ms = 22.3 ms`.
 
-Hence it is possible to reduce orders of magnitude just by finding the best approach and using the right tools for each step. A qualitative conclusion is that low resolution matching or filtering could benefit a lot from fast comparisons. But as the size of the input grows this situation quickly changes. For thousands of bits, i.e. for high resolution matching, we may need to use a different approach, like a taylored construction that can take advantage of batching techniques in order to avoid the penalty that comes from the inherently sequential method proposed by Sorting Hat.
+If after filtering we have smaller features, and consequently more comparisons, then we can already estimate the cost. Consider 5 features of 200 bits, then 5 comparisons. Meaning the cost is `5*98 micsecs + ~80ms + ~120 ms = 200.5 ms`. As a second example, using lots of small features, say 64 features of 16 bits (closer to what was explored in the underlying paper), then the cost is: `64*98 micsecs + 16*0.4 ms + 16*0.6 ms = 6.3 ms + 16 ms = 22.3 ms`.
+
+Hence it is possible to reduce orders of magnitude just by finding the best approach and using the right tools for each step. A qualitative conclusion is that low resolution matching or filtering could benefit a lot from fast comparisons. But as the size of the input grows this situation quickly changes. For thousands of bits, i.e. for high resolution matching, we may need to use a different approach, like a tailored construction that can take advantage of batching techniques in order to avoid the penalty that comes from the inherently sequential method proposed by Sorting Hat.

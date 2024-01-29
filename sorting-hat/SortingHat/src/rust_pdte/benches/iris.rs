@@ -23,35 +23,35 @@ criterion_group! {
     // This can be any expression that returns a `Criterion` object.
     config = Criterion::default().sample_size(30);
     // Add alternative xor implementations here.
-    targets = bench_rgsw_xor
+    targets = bench_cmux_xor
 }
 
 criterion_group! {
     name = bench_leq;
     // This can be any expression that returns a `Criterion` object.
     config = Criterion::default().sample_size(10);
-    targets = bench_rlwe_less_eq_than
+    targets = bench_exponent_less_eq_than
 }
 
 criterion_main!(bench_xor, bench_leq);
 
-/// Run rgsw_xor() within Criterion.
-fn bench_rgsw_xor(c: &mut Criterion) {
+/// Run cmux_xor() within Criterion.
+fn bench_cmux_xor(c: &mut Criterion) {
     c.bench_function(&format!("RGSW XOR, single bit (x{})", BIT_SIZE), |b| {
-        b.iter(rgsw_xor)
+        b.iter(cmux_xor)
     });
 }
 
-/// Run rlwe_less_eq_than() within Criterion.
-fn bench_rlwe_less_eq_than(c: &mut Criterion) {
+/// Run exponent_less_eq_than() within Criterion.
+fn bench_exponent_less_eq_than(c: &mut Criterion) {
     c.bench_function(&format!("RLWE <=, {} bits", BIT_SIZE), |b| {
-        b.iter(rlwe_less_eq_than)
+        b.iter(exponent_less_eq_than)
     });
 }
 
 /// Run one bit of an XOR operation using RGSW.
 /// 1000 bits is too slow to benchmark effectively.
-fn rgsw_xor() {
+fn cmux_xor() {
     // Setup
     let mut ctx = Context::default();
     let sk = ctx.gen_rlwe_sk();
@@ -108,7 +108,7 @@ fn rgsw_xor() {
 }
 
 /// Run one "Less than or equal to" comparison using RLWE.
-fn rlwe_less_eq_than() {
+fn exponent_less_eq_than() {
     // Setup
     let mut ctx = Context::default();
     let sk = ctx.gen_rlwe_sk();

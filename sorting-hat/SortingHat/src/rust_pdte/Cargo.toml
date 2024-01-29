@@ -23,6 +23,14 @@ bitvec = "1"
 [dev-dependencies]
 criterion = { version = "0.3", features = ["html_reports"] }
 
+[lib]
+bench = false
+
+[[bin]]
+name = "homdte"
+path = "src/main.rs"
+bench = false
+
 [[bench]]
 name = "my_benchmark"
 harness = false

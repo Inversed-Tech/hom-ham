@@ -202,29 +202,25 @@ fn rlwe_less_eq_than() {
         prod_cts.push(RLWECiphertext::allocate(ctx.poly_size));
     }
 
-    let mut prod_ct: RLWECiphertext = RLWECiphertext::allocate(ctx.poly_size);
-
     // Bench
     let k = 1;
 
     // Create the first cumulative product by multiplying by the first xor bit.
-    gsw_ct_zero.external_product(&mut prod_ct, &xor_res[0]);
-    prod_cts[0] = prod_ct.clone();
-
-    // Create each cumulative product by multiplying by the next bit.
+    xor_res[0].external_product(&mut prod_cts[0], &lwe_ct_zero);
     for i in 1..BIT_SIZE {
-        gsw_ct_zero.external_product(&mut prod_ct, &xor_res[i]);
-        prod_cts[i] = prod_ct.clone();
+        // Introduce a temporary variable. TODO: remove it
+        //prod_cts[i - 1].clone_into(&mut temp);
+        let temp = prod_cts[i - 1].clone();
+        xor_res[0].external_product(&mut prod_cts[i], &temp);
     }
 
     //let mut actual_pt = PlaintextList::allocate(Scalar::zero(), ctx.plaintext_count());
     //sk.binary_decrypt_rlwe(&mut actual_pt, &prod_cts[size-k]);
     //dbg!(actual_pt);
 
-    // This is the same value as prod_ct if k is 1
     prod_cts[BIT_SIZE - k].less_eq_than(BIT_SIZE, &mut buffers);
 
-    // Check
+    // Check <= returns the correct value
     let mut out = PlaintextList::allocate(Scalar::zero(), ctx.plaintext_count());
     sk.binary_decrypt_rlwe(&mut out, &prod_cts[BIT_SIZE - k]);
     //dbg!(out.clone());

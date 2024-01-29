@@ -160,26 +160,33 @@ fn rlwe_less_eq_than() {
         .get_mut_monomial(MonomialDegree(1))
         .get_mut_coefficient() = Scalar::one();
 
-    // Initial value of 1 (X^0)
+    // Constant value of 1 (X^0)
     let mut rwle_ct_zero = RLWECiphertext::allocate(ctx.poly_size);
     sk.binary_encrypt_rlwe(&mut rwle_ct_zero, &ptxt_zero, &mut ctx);
+    // Constant value of X (X^1)
+    let mut rwle_ct_one = RLWECiphertext::allocate(ctx.poly_size);
+    sk.binary_encrypt_rlwe(&mut rwle_ct_one, &ptxt_one, &mut ctx);
+
+    // Constant value of 1 (X^0)
+    let mut gsw_ct_zero = RGSWCiphertext::allocate(ctx.poly_size, ctx.base_log, ctx.level_count);
+    sk.encrypt_rgsw(&mut gsw_ct_zero, &ptxt_zero, &mut ctx);
 
     // Use random bits
     let mut rng = rand::thread_rng();
-    let mut gsw_cts: Vec<RGSWCiphertext> = Vec::with_capacity(BIT_SIZE);
+    let mut xor_res: Vec<RLWECiphertext> = Vec::with_capacity(BIT_SIZE);
     for _ in 0..BIT_SIZE {
-        let mut gsw_ct = RGSWCiphertext::allocate(ctx.poly_size, ctx.base_log, ctx.level_count);
+        let mut xor_bit = RLWECiphertext::allocate(ctx.poly_size);
 
-        let random_bit_gsw: bool = rng.gen();
-        if random_bit_gsw {
+        let random_bit_lwe: bool = rng.gen();
+        if random_bit_lwe {
             // Multiply by X
-            sk.encrypt_rgsw(&mut gsw_ct, &ptxt_one, &mut ctx);
+            sk.binary_encrypt_rlwe(&mut xor_bit, &ptxt_one, &mut ctx);
         } else {
             // Multiply by 1
-            sk.encrypt_rgsw(&mut gsw_ct, &ptxt_zero, &mut ctx);
+            sk.binary_encrypt_rlwe(&mut xor_bit, &ptxt_zero, &mut ctx);
         };
 
-        gsw_cts.push(gsw_ct);
+        xor_res.push(xor_bit);
     }
 
     //let mut prod = RLWECiphertext::allocate(ctx.poly_size);
@@ -200,13 +207,13 @@ fn rlwe_less_eq_than() {
     // Bench
     let k = 1;
 
-    // Create the first cumulative product by multiplying by the first bit.
-    gsw_cts[0].external_product(&mut prod_ct, &rwle_ct_zero);
+    // Create the first cumulative product by multiplying by the first xor bit.
+    gsw_ct_zero.external_product(&mut prod_ct, &xor_res[0]);
     prod_cts[0] = prod_ct.clone();
 
     // Create each cumulative product by multiplying by the next bit.
     for i in 1..BIT_SIZE {
-        gsw_cts[i].external_product(&mut prod_ct, &prod_cts[i - 1]);
+        gsw_ct_zero.external_product(&mut prod_ct, &xor_res[i]);
         prod_cts[i] = prod_ct.clone();
     }
 

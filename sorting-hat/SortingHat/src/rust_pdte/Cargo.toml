@@ -21,7 +21,7 @@ rayon = "1.5"
 bitvec = "1"
 
 [dev-dependencies]
-criterion = "0.3"
+criterion = { version = "0.3", features = ["html_reports"] }
 
 [[bench]]
 name = "my_benchmark"

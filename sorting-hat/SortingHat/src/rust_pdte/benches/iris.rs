@@ -50,44 +50,23 @@ fn bench_rlwe_less_eq_than(c: &mut Criterion) {
 }
 
 /// Run one bit of an XOR operation using RGSW.
+/// 1000 bits is too slow to benchmark effectively.
 fn rgsw_xor() {
     // Setup
     let mut ctx = Context::default();
-    let _sk = ctx.gen_rlwe_sk();
-    let _m = ctx.poly_size.0 / 2;
-    //dbg!(_m);
+    let sk = ctx.gen_rlwe_sk();
 
     let mut ptxt_zero = PlaintextList::allocate(Scalar::zero(), ctx.plaintext_count());
     *ptxt_zero
         .as_mut_polynomial()
         .get_mut_monomial(MonomialDegree(0))
         .get_mut_coefficient() = Scalar::one();
-    //dbg!(ptxt_zero.clone().as_mut_polynomial().get_mut_monomial(MonomialDegree(0)).get_mut_coefficient());
 
     let mut ptxt_one = PlaintextList::allocate(Scalar::zero(), ctx.plaintext_count());
     *ptxt_one
         .as_mut_polynomial()
         .get_mut_monomial(MonomialDegree(1))
         .get_mut_coefficient() = Scalar::one();
-
-    let mut ctx = Context::default();
-    let sk = ctx.gen_rlwe_sk();
-
-    //let mut ct_zero = RLWECiphertext::allocate(ctx.poly_size);
-    //sk.binary_encrypt_rlwe(&mut ct_zero, &ptxt_zero, &mut ctx);
-    //let mut ct_one = RLWECiphertext::allocate(ctx.poly_size);
-    //sk.binary_encrypt_rlwe(&mut ct_one, &ptxt_one, &mut ctx);
-
-    //let mut gsw_ct_zero = RGSWCiphertext::allocate(ctx.poly_size, ctx.base_log, ctx.level_count);
-    //sk.encrypt_rgsw(&mut gsw_ct_zero, &ptxt_zero, &mut ctx); // 1
-
-    //let mut gsw_cts_orb: Vec<RGSWCiphertext> = Vec::with_capacity(BIT_SIZE);
-    //let mut gsw_cts_db: Vec<RLWECiphertext> = Vec::with_capacity(BIT_SIZE);
-    //let mut _gsw_cts: Vec<RGSWCiphertext> = Vec::with_capacity(BIT_SIZE);
-    //let mut lwe_cts: Vec<RLWECiphertext> = Vec::with_capacity(BIT_SIZE);
-
-    // Fill with random bits
-    //for _ in 0..BIT_SIZE {
 
     // Use random bits
     let mut orb_ct = RGSWCiphertext::allocate(ctx.poly_size, ctx.base_log, ctx.level_count);
@@ -103,27 +82,17 @@ fn rgsw_xor() {
         sk.encrypt_rgsw(&mut orb_ct, &ptxt_zero, &mut ctx); // 1
     };
     if random_bit_db {
-        //sk.encrypt_rgsw(&mut db_ct, &ptxt_one, &mut ctx); // X
         sk.binary_encrypt_rlwe(&mut db_ct, &ptxt_one, &mut ctx); // X
         sk.binary_encrypt_rlwe(&mut db_ct_not, &ptxt_zero, &mut ctx); // 1
     } else {
-        //sk.encrypt_rgsw(&mut db_ct, &ptxt_zero, &mut ctx); // X
         sk.binary_encrypt_rlwe(&mut db_ct, &ptxt_zero, &mut ctx); // 1
         sk.binary_encrypt_rlwe(&mut db_ct_not, &ptxt_one, &mut ctx); // X
     };
-
-    //gsw_cts_orb.push(RGSWCiphertext::allocate(ctx.poly_size, ctx.base_log, ctx.level_count));
-    //gsw_cts_orb.push(orb_ct.clone());
-    //gsw_cts_db.push(RGSWCiphertext::allocate(ctx.poly_size, ctx.base_log, ctx.level_count));
-    //gsw_cts_db.push(db_ct.clone());
 
     let mut xor_res = RLWECiphertext::allocate(ctx.poly_size);
 
     // Bench XOR inside loop
     orb_ct.cmux(&mut xor_res, &db_ct, &db_ct_not);
-
-    // Collect results
-    //lwe_cts.push(xor_res.clone());
 
     // Check XOR returns the correct value
     let mut xor_pt = PlaintextList::allocate(Scalar::zero(), ctx.plaintext_count());
@@ -143,8 +112,6 @@ fn rlwe_less_eq_than() {
     // Setup
     let mut ctx = Context::default();
     let sk = ctx.gen_rlwe_sk();
-    //let _m = ctx.poly_size.0 / 2;
-    //dbg!(_m);
 
     let mut buffers = FourierBuffers::new(ctx.poly_size, GlweSize(2));
 
@@ -191,13 +158,6 @@ fn rlwe_less_eq_than() {
         xor_res.push(xor_bit);
     }
 
-    //let mut prod = RLWECiphertext::allocate(ctx.poly_size);
-    //gsw_ct_one.external_product(&mut prod, &lwe_ct);
-
-    //let mut dec_prod = PlaintextList::allocate(Scalar::zero(), ctx.plaintext_count());
-    //sk.binary_decrypt_rlwe(&mut dec_prod, &prod);
-    //dbg!(dec_prod);
-
     // TODO: is keeping copies of the cumulative totals necessary?
     let mut prod_cts: Vec<RLWECiphertext> = Vec::with_capacity(BIT_SIZE);
     for _ in 0..BIT_SIZE {
@@ -219,16 +179,11 @@ fn rlwe_less_eq_than() {
         xor_res[0].external_product(&mut prod_cts[i], &temp);
     }
 
-    //let mut actual_pt = PlaintextList::allocate(Scalar::zero(), ctx.plaintext_count());
-    //sk.binary_decrypt_rlwe(&mut actual_pt, &prod_cts[size-k]);
-    //dbg!(actual_pt);
-
     prod_cts[BIT_SIZE - k].less_eq_than(BIT_SIZE, &mut buffers);
 
     // Check <= returns the correct value
     let mut out = PlaintextList::allocate(Scalar::zero(), ctx.plaintext_count());
     sk.binary_decrypt_rlwe(&mut out, &prod_cts[BIT_SIZE - k]);
-    //dbg!(out.clone());
     assert_eq!(
         *out.as_polynomial()
             .get_monomial(MonomialDegree(0))

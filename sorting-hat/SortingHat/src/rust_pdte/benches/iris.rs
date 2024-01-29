@@ -11,7 +11,7 @@ use concrete_core::backends::core::private::crypto::{
 use homdte::{rgsw::*, rlwe::*, *};
 use num_traits::identities::*;
 
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 
 /// The number of bits in each operation.
 pub const BIT_SIZE: usize = 1000;
@@ -21,7 +21,7 @@ pub const BIT_SIZE: usize = 1000;
 criterion_group! {
     name = bench_xor;
     // This can be any expression that returns a `Criterion` object.
-    config = Criterion::default().sample_size(30);
+    config = Criterion::default().sample_size(10);
     // Add alternative xor implementations here.
     targets = bench_cmux_xor
 }
@@ -37,21 +37,6 @@ criterion_main!(bench_xor, bench_leq);
 
 /// Run cmux_xor() within Criterion.
 fn bench_cmux_xor(c: &mut Criterion) {
-    c.bench_function(&format!("RGSW XOR, single bit (x{})", BIT_SIZE), |b| {
-        b.iter(cmux_xor)
-    });
-}
-
-/// Run exponent_less_eq_than() within Criterion.
-fn bench_exponent_less_eq_than(c: &mut Criterion) {
-    c.bench_function(&format!("RLWE <=, {} bits", BIT_SIZE), |b| {
-        b.iter(exponent_less_eq_than)
-    });
-}
-
-/// Run one bit of an XOR operation using RGSW.
-/// 1000 bits is too slow to benchmark effectively.
-fn cmux_xor() {
     // Setup
     let mut ctx = Context::default();
     let sk = ctx.gen_rlwe_sk();
@@ -89,22 +74,76 @@ fn cmux_xor() {
         sk.binary_encrypt_rlwe(&mut db_ct_not, &ptxt_one, &mut ctx); // X
     };
 
+    c.bench_with_input(
+        BenchmarkId::new(
+            format!("RGSW XOR, single bit (x{BIT_SIZE})"),
+            format!("orb: {random_bit_orb}, db: {random_bit_db}"),
+        ),
+        &(
+            orb_ct,
+            db_ct,
+            db_ct_not,
+            ctx,
+            sk,
+            random_bit_orb,
+            random_bit_db,
+        ),
+        |b, (orb_ct, db_ct, db_ct_not, ctx, sk, random_bit_orb, random_bit_db)| {
+            b.iter(|| {
+                cmux_xor(
+                    orb_ct,
+                    db_ct,
+                    db_ct_not,
+                    ctx,
+                    sk,
+                    *random_bit_orb,
+                    *random_bit_db,
+                )
+            })
+        },
+    );
+}
+
+/// Run exponent_less_eq_than() within Criterion.
+fn bench_exponent_less_eq_than(c: &mut Criterion) {
+    c.bench_function(&format!("RLWE <=, {} bits", BIT_SIZE), |b| {
+        b.iter(exponent_less_eq_than)
+    });
+}
+
+/// Run one bit of an XOR operation using RGSW.
+/// 1000 bits is too slow to benchmark effectively.
+fn cmux_xor(
+    orb_ct: &RGSWCiphertext,
+    db_ct: &RLWECiphertext,
+    db_ct_not: &RLWECiphertext,
+    ctx: &Context,
+    _sk: &RLWESecretKey,
+    _random_bit_orb: bool,
+    _random_bit_db: bool,
+) {
+    // TODO: exclude this allocation from the benchmark.
     let mut xor_res = RLWECiphertext::allocate(ctx.poly_size);
 
-    // Bench XOR inside loop
-    orb_ct.cmux(&mut xor_res, &db_ct, &db_ct_not);
+    // Benchmark XOR.
+    // This operation is run BIT_SIZE times inside a loop to produce a single XOR result.
+    orb_ct.cmux(&mut xor_res, db_ct, db_ct_not);
 
     // Check XOR returns the correct value
+    // TODO: run this check during warmups but not the benchmark itself.
+    // We can use AtomicUsize to skip the check after N runs.
+    /*
     let mut xor_pt = PlaintextList::allocate(Scalar::zero(), ctx.plaintext_count());
-    sk.binary_decrypt_rlwe(&mut xor_pt, &xor_res);
+    _sk.binary_decrypt_rlwe(&mut xor_pt, &xor_res);
 
     assert_eq!(
         *xor_pt
             .as_polynomial()
             .get_monomial(MonomialDegree(0))
             .get_coefficient(),
-        Scalar::from(random_bit_orb ^ random_bit_db),
+        Scalar::from(_random_bit_orb ^ _random_bit_db),
     );
+    */
 }
 
 /// Run one "Less than or equal to" comparison using RLWE.

@@ -161,29 +161,31 @@ fn rlwe_less_eq_than() {
         .get_mut_coefficient() = Scalar::one();
 
     // Constant value of 1 (X^0)
-    let mut rwle_ct_zero = RLWECiphertext::allocate(ctx.poly_size);
-    sk.binary_encrypt_rlwe(&mut rwle_ct_zero, &ptxt_zero, &mut ctx);
+    let mut lwe_ct_zero = RLWECiphertext::allocate(ctx.poly_size);
+    sk.binary_encrypt_rlwe(&mut lwe_ct_zero, &ptxt_zero, &mut ctx);
     // Constant value of X (X^1)
-    let mut rwle_ct_one = RLWECiphertext::allocate(ctx.poly_size);
-    sk.binary_encrypt_rlwe(&mut rwle_ct_one, &ptxt_one, &mut ctx);
+    let mut lwe_ct_one = RLWECiphertext::allocate(ctx.poly_size);
+    sk.binary_encrypt_rlwe(&mut lwe_ct_one, &ptxt_one, &mut ctx);
 
-    // Constant value of 1 (X^0)
     let mut gsw_ct_zero = RGSWCiphertext::allocate(ctx.poly_size, ctx.base_log, ctx.level_count);
     sk.encrypt_rgsw(&mut gsw_ct_zero, &ptxt_zero, &mut ctx);
+    let mut gsw_ct_one = RGSWCiphertext::allocate(ctx.poly_size, ctx.base_log, ctx.level_count);
+    sk.encrypt_rgsw(&mut gsw_ct_one, &ptxt_one, &mut ctx);
 
     // Use random bits
+    // TODO: should these be RWLE bits to match the XOR result?
     let mut rng = rand::thread_rng();
-    let mut xor_res: Vec<RLWECiphertext> = Vec::with_capacity(BIT_SIZE);
+    let mut xor_res: Vec<RGSWCiphertext> = Vec::with_capacity(BIT_SIZE);
     for _ in 0..BIT_SIZE {
-        let mut xor_bit = RLWECiphertext::allocate(ctx.poly_size);
+        let mut xor_bit = RGSWCiphertext::allocate(ctx.poly_size, ctx.base_log, ctx.level_count);
 
-        let random_bit_lwe: bool = rng.gen();
-        if random_bit_lwe {
+        let random_bit: bool = rng.gen();
+        if random_bit {
             // Multiply by X
-            sk.binary_encrypt_rlwe(&mut xor_bit, &ptxt_one, &mut ctx);
+            sk.encrypt_rgsw(&mut xor_bit, &ptxt_one, &mut ctx);
         } else {
             // Multiply by 1
-            sk.binary_encrypt_rlwe(&mut xor_bit, &ptxt_zero, &mut ctx);
+            sk.encrypt_rgsw(&mut xor_bit, &ptxt_zero, &mut ctx);
         };
 
         xor_res.push(xor_bit);
@@ -205,9 +207,12 @@ fn rlwe_less_eq_than() {
     // Bench
     let k = 1;
 
-    // Create the first cumulative product by multiplying by the first xor bit.
+    // Create the first cumulative product by multiplying 1 (X^0) by the first xor bit (1 or X).
     xor_res[0].external_product(&mut prod_cts[0], &lwe_ct_zero);
     for i in 1..BIT_SIZE {
+        // Create the each cumulative product by multiplying the cumulative product by the next xor bit
+        // (1 or X).
+        //
         // Introduce a temporary variable. TODO: remove it
         //prod_cts[i - 1].clone_into(&mut temp);
         let temp = prod_cts[i - 1].clone();

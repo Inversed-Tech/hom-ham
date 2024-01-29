@@ -18,21 +18,38 @@ pub const BIT_SIZE: usize = 1000;
 
 // Configure Criterion:
 // Define one group for each equivalent operation, so we can compare their times.
-criterion_group!(bench_xor, bench_rgsw_xor);
-criterion_group!(bench_leq, bench_rlwe_less_eq_than);
+criterion_group! {
+    name = bench_xor;
+    // This can be any expression that returns a `Criterion` object.
+    config = Criterion::default().sample_size(30);
+    // Add alternative xor implementations here.
+    targets = bench_rgsw_xor
+}
+
+criterion_group! {
+    name = bench_leq;
+    // This can be any expression that returns a `Criterion` object.
+    config = Criterion::default().sample_size(10);
+    targets = bench_rlwe_less_eq_than
+}
+
 criterion_main!(bench_xor, bench_leq);
 
 /// Run rgsw_xor() within Criterion.
 fn bench_rgsw_xor(c: &mut Criterion) {
-    c.bench_function("RGSW XOR", |b| b.iter(rgsw_xor));
+    c.bench_function(&format!("RGSW XOR, single bit (x{})", BIT_SIZE), |b| {
+        b.iter(rgsw_xor)
+    });
 }
 
 /// Run rlwe_less_eq_than() within Criterion.
 fn bench_rlwe_less_eq_than(c: &mut Criterion) {
-    c.bench_function("RLWE <=", |b| b.iter(rlwe_less_eq_than));
+    c.bench_function(&format!("RLWE <=, {} bits", BIT_SIZE), |b| {
+        b.iter(rlwe_less_eq_than)
+    });
 }
 
-/// Run one XOR operation using RGSW.
+/// Run one bit of an XOR operation using RGSW.
 fn rgsw_xor() {
     // Setup
     let mut ctx = Context::default();
@@ -64,53 +81,53 @@ fn rgsw_xor() {
     //let mut gsw_ct_zero = RGSWCiphertext::allocate(ctx.poly_size, ctx.base_log, ctx.level_count);
     //sk.encrypt_rgsw(&mut gsw_ct_zero, &ptxt_zero, &mut ctx); // 1
 
-    let mut gsw_cts_orb: Vec<RGSWCiphertext> = Vec::with_capacity(BIT_SIZE);
-    let mut gsw_cts_db: Vec<RLWECiphertext> = Vec::with_capacity(BIT_SIZE);
-    let mut _gsw_cts: Vec<RGSWCiphertext> = Vec::with_capacity(BIT_SIZE);
-    let mut lwe_cts: Vec<RLWECiphertext> = Vec::with_capacity(BIT_SIZE);
+    //let mut gsw_cts_orb: Vec<RGSWCiphertext> = Vec::with_capacity(BIT_SIZE);
+    //let mut gsw_cts_db: Vec<RLWECiphertext> = Vec::with_capacity(BIT_SIZE);
+    //let mut _gsw_cts: Vec<RGSWCiphertext> = Vec::with_capacity(BIT_SIZE);
+    //let mut lwe_cts: Vec<RLWECiphertext> = Vec::with_capacity(BIT_SIZE);
 
     // Fill with random bits
-    for _ in 0..BIT_SIZE {
-        // Setup inside loop
-        let mut orb_ct = RGSWCiphertext::allocate(ctx.poly_size, ctx.base_log, ctx.level_count);
-        let mut db_ct = RLWECiphertext::allocate(ctx.poly_size);
-        let mut db_ct_not = RLWECiphertext::allocate(ctx.poly_size);
+    //for _ in 0..BIT_SIZE {
 
-        let mut rng = rand::thread_rng();
-        let random_bit_orb: bool = rng.gen();
-        let random_bit_db: bool = rng.gen();
-        if random_bit_orb {
-            sk.encrypt_rgsw(&mut orb_ct, &ptxt_one, &mut ctx); // X
-        } else {
-            sk.encrypt_rgsw(&mut orb_ct, &ptxt_zero, &mut ctx); // X
-        };
-        if random_bit_db {
-            //sk.encrypt_rgsw(&mut db_ct, &ptxt_one, &mut ctx); // X
-            sk.binary_encrypt_rlwe(&mut db_ct, &ptxt_one, &mut ctx); // X
-            sk.binary_encrypt_rlwe(&mut db_ct_not, &ptxt_zero, &mut ctx); // X
-        } else {
-            //sk.encrypt_rgsw(&mut db_ct, &ptxt_zero, &mut ctx); // X
-            sk.binary_encrypt_rlwe(&mut db_ct, &ptxt_zero, &mut ctx); // X
-            sk.binary_encrypt_rlwe(&mut db_ct_not, &ptxt_one, &mut ctx); // X
-        };
+    // Use random bits
+    let mut orb_ct = RGSWCiphertext::allocate(ctx.poly_size, ctx.base_log, ctx.level_count);
+    let mut db_ct = RLWECiphertext::allocate(ctx.poly_size);
+    let mut db_ct_not = RLWECiphertext::allocate(ctx.poly_size);
 
-        //gsw_cts_orb.push(RGSWCiphertext::allocate(ctx.poly_size, ctx.base_log, ctx.level_count));
-        gsw_cts_orb.push(orb_ct.clone());
-        //gsw_cts_db.push(RGSWCiphertext::allocate(ctx.poly_size, ctx.base_log, ctx.level_count));
-        gsw_cts_db.push(db_ct.clone());
+    let mut rng = rand::thread_rng();
+    let random_bit_orb: bool = rng.gen();
+    let random_bit_db: bool = rng.gen();
+    if random_bit_orb {
+        sk.encrypt_rgsw(&mut orb_ct, &ptxt_one, &mut ctx); // X
+    } else {
+        sk.encrypt_rgsw(&mut orb_ct, &ptxt_zero, &mut ctx); // X
+    };
+    if random_bit_db {
+        //sk.encrypt_rgsw(&mut db_ct, &ptxt_one, &mut ctx); // X
+        sk.binary_encrypt_rlwe(&mut db_ct, &ptxt_one, &mut ctx); // X
+        sk.binary_encrypt_rlwe(&mut db_ct_not, &ptxt_zero, &mut ctx); // X
+    } else {
+        //sk.encrypt_rgsw(&mut db_ct, &ptxt_zero, &mut ctx); // X
+        sk.binary_encrypt_rlwe(&mut db_ct, &ptxt_zero, &mut ctx); // X
+        sk.binary_encrypt_rlwe(&mut db_ct_not, &ptxt_one, &mut ctx); // X
+    };
 
-        let mut xor_res = RLWECiphertext::allocate(ctx.poly_size);
+    //gsw_cts_orb.push(RGSWCiphertext::allocate(ctx.poly_size, ctx.base_log, ctx.level_count));
+    //gsw_cts_orb.push(orb_ct.clone());
+    //gsw_cts_db.push(RGSWCiphertext::allocate(ctx.poly_size, ctx.base_log, ctx.level_count));
+    //gsw_cts_db.push(db_ct.clone());
 
-        // Bench XOR inside loop
-        orb_ct.cmux(&mut xor_res, &db_ct, &db_ct_not);
+    let mut xor_res = RLWECiphertext::allocate(ctx.poly_size);
 
-        // Collect results
-        lwe_cts.push(xor_res.clone());
+    // Bench XOR inside loop
+    orb_ct.cmux(&mut xor_res, &db_ct, &db_ct_not);
 
-        // TODO: check xor_pt
-        let mut xor_pt = PlaintextList::allocate(Scalar::zero(), ctx.plaintext_count());
-        sk.binary_decrypt_rlwe(&mut xor_pt, &xor_res);
-    }
+    // Collect results
+    //lwe_cts.push(xor_res.clone());
+
+    // TODO: check xor_pt has the correct value
+    let mut xor_pt = PlaintextList::allocate(Scalar::zero(), ctx.plaintext_count());
+    sk.binary_decrypt_rlwe(&mut xor_pt, &xor_res);
 }
 
 /// Run one "Less than or equal to" comparison using RLWE.

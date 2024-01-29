@@ -11,14 +11,25 @@ use concrete_core::backends::core::private::crypto::{
 use homdte::{rgsw::*, rlwe::*, *};
 use num_traits::identities::*;
 
-//use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 
 /// The number of bits in each operation.
 pub const BIT_SIZE: usize = 1000;
 
-fn main() {
-    rgsw_xor();
-    rlwe_less_eq_than();
+// Configure Criterion:
+// Define one group for each equivalent operation, so we can compare their times.
+criterion_group!(bench_xor, bench_rgsw_xor);
+criterion_group!(bench_leq, bench_rlwe_less_eq_than);
+criterion_main!(bench_xor, bench_leq);
+
+/// Run rgsw_xor() within Criterion.
+fn bench_rgsw_xor(c: &mut Criterion) {
+    c.bench_function("RGSW XOR", |b| b.iter(rgsw_xor));
+}
+
+/// Run rlwe_less_eq_than() within Criterion.
+fn bench_rlwe_less_eq_than(c: &mut Criterion) {
+    c.bench_function("RLWE <=", |b| b.iter(rlwe_less_eq_than));
 }
 
 /// Run one XOR operation using RGSW.

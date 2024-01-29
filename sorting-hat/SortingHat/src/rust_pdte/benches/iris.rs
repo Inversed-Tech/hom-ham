@@ -125,9 +125,17 @@ fn rgsw_xor() {
     // Collect results
     //lwe_cts.push(xor_res.clone());
 
-    // TODO: check xor_pt has the correct value
+    // Check XOR returns the correct value
     let mut xor_pt = PlaintextList::allocate(Scalar::zero(), ctx.plaintext_count());
     sk.binary_decrypt_rlwe(&mut xor_pt, &xor_res);
+
+    assert_eq!(
+        *xor_pt
+            .as_polynomial()
+            .get_monomial(MonomialDegree(0))
+            .get_coefficient(),
+        Scalar::from(random_bit_orb ^ random_bit_db),
+    );
 }
 
 /// Run one "Less than or equal to" comparison using RLWE.

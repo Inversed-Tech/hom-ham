@@ -89,7 +89,7 @@ fn bench_cmux_xor(c: &mut Criterion) {
             random_bit_db,
         ),
         |b, (orb_ct, db_ct, db_ct_not, ctx, sk, random_bit_orb, random_bit_db)| {
-            b.iter(|| {
+            b.iter_with_large_drop(|| {
                 cmux_xor(
                     orb_ct,
                     db_ct,
@@ -152,7 +152,7 @@ fn bench_exponent_less_eq_than(c: &mut Criterion) {
         ),
         &(xor_res, lwe_ct_zero, ctx, sk),
         |b, (xor_res, lwe_ct_zero, ctx, sk)| {
-            b.iter(|| exponent_less_eq_than(xor_res, lwe_ct_zero, ctx, sk))
+            b.iter_with_large_drop(|| exponent_less_eq_than(xor_res, lwe_ct_zero, ctx, sk))
         },
     );
 }
@@ -167,8 +167,8 @@ fn cmux_xor(
     _sk: &RLWESecretKey,
     _random_bit_orb: bool,
     _random_bit_db: bool,
-) {
-    // TODO: exclude this allocation from the benchmark.
+) -> RLWECiphertext {
+    // TODO: exclude this allocation from the benchmark using iter_batched_ref().
     let mut xor_res = RLWECiphertext::allocate(ctx.poly_size);
 
     // Benchmark XOR.
@@ -192,6 +192,9 @@ fn cmux_xor(
             Scalar::from(_random_bit_orb ^ _random_bit_db),
         );
     }
+
+    // Drop this outside the timed benchmark.
+    xor_res
 }
 
 /// Run one "Less than or equal to" comparison using RLWE.
@@ -201,8 +204,8 @@ fn exponent_less_eq_than(
     lwe_ct_zero: &RLWECiphertext,
     ctx: &Context,
     _sk: &RLWESecretKey,
-) {
-    // TODO: exclude both these allocations from the benchmark.
+) -> (FourierBuffers<Scalar>, Vec<RLWECiphertext>) {
+    // TODO: exclude both these allocations from the benchmark using iter_batched_ref().
     let mut buffers = FourierBuffers::new(ctx.poly_size, GlweSize(2));
 
     // TODO: is keeping copies of the cumulative totals necessary?
@@ -245,4 +248,7 @@ fn exponent_less_eq_than(
             Scalar::one()
         );
     }
+
+    // Drop this outside the timed benchmark.
+    (buffers, prod_cts)
 }

@@ -100,15 +100,15 @@ fn rgsw_xor() {
     if random_bit_orb {
         sk.encrypt_rgsw(&mut orb_ct, &ptxt_one, &mut ctx); // X
     } else {
-        sk.encrypt_rgsw(&mut orb_ct, &ptxt_zero, &mut ctx); // X
+        sk.encrypt_rgsw(&mut orb_ct, &ptxt_zero, &mut ctx); // 1
     };
     if random_bit_db {
         //sk.encrypt_rgsw(&mut db_ct, &ptxt_one, &mut ctx); // X
         sk.binary_encrypt_rlwe(&mut db_ct, &ptxt_one, &mut ctx); // X
-        sk.binary_encrypt_rlwe(&mut db_ct_not, &ptxt_zero, &mut ctx); // X
+        sk.binary_encrypt_rlwe(&mut db_ct_not, &ptxt_zero, &mut ctx); // 1
     } else {
         //sk.encrypt_rgsw(&mut db_ct, &ptxt_zero, &mut ctx); // X
-        sk.binary_encrypt_rlwe(&mut db_ct, &ptxt_zero, &mut ctx); // X
+        sk.binary_encrypt_rlwe(&mut db_ct, &ptxt_zero, &mut ctx); // 1
         sk.binary_encrypt_rlwe(&mut db_ct_not, &ptxt_one, &mut ctx); // X
     };
 
@@ -148,18 +148,39 @@ fn rlwe_less_eq_than() {
 
     let mut buffers = FourierBuffers::new(ctx.poly_size, GlweSize(2));
 
+    let mut ptxt_zero = PlaintextList::allocate(Scalar::zero(), ctx.plaintext_count());
+    *ptxt_zero
+        .as_mut_polynomial()
+        .get_mut_monomial(MonomialDegree(0))
+        .get_mut_coefficient() = Scalar::one();
+
     let mut ptxt_one = PlaintextList::allocate(Scalar::zero(), ctx.plaintext_count());
     *ptxt_one
         .as_mut_polynomial()
         .get_mut_monomial(MonomialDegree(1))
         .get_mut_coefficient() = Scalar::one();
 
-    let mut gsw_ct_one = RGSWCiphertext::allocate(ctx.poly_size, ctx.base_log, ctx.level_count);
-    sk.encrypt_rgsw(&mut gsw_ct_one, &ptxt_one, &mut ctx); // X
+    // Initial value of 1 (X^0)
+    let mut rwle_ct_zero = RLWECiphertext::allocate(ctx.poly_size);
+    sk.binary_encrypt_rlwe(&mut rwle_ct_zero, &ptxt_zero, &mut ctx);
 
-    // TODO: benchmark a random combination of ptxt_zero and ptxt_one, or use lwe_cts
-    let mut lwe_ct = RLWECiphertext::allocate(ctx.poly_size);
-    sk.binary_encrypt_rlwe(&mut lwe_ct, &ptxt_one, &mut ctx); // X
+    // Use random bits
+    let mut rng = rand::thread_rng();
+    let mut gsw_cts: Vec<RGSWCiphertext> = Vec::with_capacity(BIT_SIZE);
+    for _ in 0..BIT_SIZE {
+        let mut gsw_ct = RGSWCiphertext::allocate(ctx.poly_size, ctx.base_log, ctx.level_count);
+
+        let random_bit_gsw: bool = rng.gen();
+        if random_bit_gsw {
+            // Multiply by X
+            sk.encrypt_rgsw(&mut gsw_ct, &ptxt_one, &mut ctx);
+        } else {
+            // Multiply by 1
+            sk.encrypt_rgsw(&mut gsw_ct, &ptxt_zero, &mut ctx);
+        };
+
+        gsw_cts.push(gsw_ct);
+    }
 
     //let mut prod = RLWECiphertext::allocate(ctx.poly_size);
     //gsw_ct_one.external_product(&mut prod, &lwe_ct);
@@ -168,25 +189,33 @@ fn rlwe_less_eq_than() {
     //sk.binary_decrypt_rlwe(&mut dec_prod, &prod);
     //dbg!(dec_prod);
 
+    // TODO: is keeping copies of the cumulative totals necessary?
     let mut prod_cts: Vec<RLWECiphertext> = Vec::with_capacity(BIT_SIZE);
     for _ in 0..BIT_SIZE {
         prod_cts.push(RLWECiphertext::allocate(ctx.poly_size));
     }
 
+    let mut prod_ct: RLWECiphertext = RLWECiphertext::allocate(ctx.poly_size);
+
     // Bench
     let k = 1;
 
-    gsw_ct_one.external_product(&mut prod_cts[0], &lwe_ct);
+    // Create the first cumulative product by multiplying by the first bit.
+    gsw_cts[0].external_product(&mut prod_ct, &rwle_ct_zero);
+    prod_cts[0] = prod_ct.clone();
 
+    // Create each cumulative product by multiplying by the next bit.
     for i in 1..BIT_SIZE {
-        let temp = prod_cts[i - 1].clone(); // Introduce a temporary variable. TODO: remove it
-        gsw_ct_one.external_product(&mut prod_cts[i], &temp);
+        gsw_cts[i].external_product(&mut prod_ct, &prod_cts[i - 1]);
+        prod_cts[i] = prod_ct.clone();
     }
 
     //let mut actual_pt = PlaintextList::allocate(Scalar::zero(), ctx.plaintext_count());
     //sk.binary_decrypt_rlwe(&mut actual_pt, &prod_cts[size-k]);
     //dbg!(actual_pt);
-    prod_cts[BIT_SIZE - k].less_eq_than(1100, &mut buffers);
+
+    // This is the same value as prod_ct if k is 1
+    prod_cts[BIT_SIZE - k].less_eq_than(BIT_SIZE, &mut buffers);
 
     // Check
     let mut out = PlaintextList::allocate(Scalar::zero(), ctx.plaintext_count());

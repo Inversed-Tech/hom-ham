@@ -37,7 +37,7 @@ The main branch of the `concrete-core` git repository contains a fix for aarch64
 Instead, cross-compile to x86_64 and run the binary using Rosetta:
 
 ```
-rustup target add --toolchain stable-aarch64-apple-darwin x86_64-apple-darwi
+rustup target add --toolchain stable-aarch64-apple-darwin x86_64-apple-darwin
 cd SortingHat/src/rust_pdte
 cargo bench --bench iris --target=x86_64-apple-darwin
 ```

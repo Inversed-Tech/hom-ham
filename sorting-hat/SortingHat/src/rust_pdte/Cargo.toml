@@ -8,8 +8,10 @@ lto = "fat"
 codegen-units = 1
 
 [dependencies]
-concrete-commons = "0.2.0"
-concrete-core = { version = "1.0.0-beta" }
+# This code is only compatible with the pre-1.0.0 API
+concrete-commons = "=0.2.0"
+concrete-core = { version = "=1.0.0-beta" }
+
 csv = "1.1"
 rand = "0.8"
 num-traits = "0.2"

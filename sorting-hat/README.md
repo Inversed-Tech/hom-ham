@@ -28,6 +28,24 @@ cd SortingHat/src/rust_pdte
 cargo bench --bench iris
 ```
 
+#### Apple M1+ and 64-bit ARM processors
+
+On aarch64 (M1+), the CSPRNG seeder won't compile because it assumes it's running on x86_64.
+
+The main branch of the `concrete-core` git repository contains a fix for aarch64 (Apple M1+) stable compilation, in commit c1fa503eee063af82bd5f36c26fd951d9a126c76. But this doesn't work because the concrete_core API has changed too much since SortingHat was written. (Also, the main branch is on version 1.0.1 even though version 1.0.2 was released without this fix.)
+
+Instead, cross-compile to x86_64 and run the binary using Rosetta:
+
+```
+rustup target add --toolchain stable-aarch64-apple-darwin x86_64-apple-darwin
+cd SortingHat/src/rust_pdte
+cargo bench --bench iris --target=x86_64-apple-darwin
+```
+
+The first time the benchmark runs, macOS might ask you to install Rosetta. After that install, the binaries will automatically be emulated.
+
+The emulation will give different performance results to native aarch64 and native x86_64.
+
 ### Experimental Outcomes
 
 With this information in our hands, we can already quickly sketch scenarios and estimate time for the homomorphic evaluations. For example, using fast comparisons (98 micsecs) and 1000 additions (400 ms) for counting bits, and 1000 XORs (600 ms, the bottleneck). Total is 1 second.
